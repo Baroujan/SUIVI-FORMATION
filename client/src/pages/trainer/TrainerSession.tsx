@@ -61,7 +61,7 @@ export default function TrainerSession() {
   const qrScannerRef = useRef<HTMLDivElement>(null);
 
   const { data: trainees = [], isLoading: loadingTrainees } = useQuery<User[]>({
-    queryKey: ['/api/users', { role: 'trainee' }],
+    queryKey: ['/api/users?role=trainee'],
   });
 
   const { data: instruments = [], isLoading: loadingInstruments } = useQuery<Instrument[]>({
@@ -81,13 +81,13 @@ export default function TrainerSession() {
   });
 
   const { data: savedSessions = [] } = useQuery<any[]>({
-    queryKey: ['/api/training-sessions', { trainerId: currentUser?.id }],
+    queryKey: [`/api/training-sessions?trainerId=${currentUser?.id}`],
     enabled: !!currentUser?.id,
   });
 
   const validationQueries = useQueries({
     queries: selectedTraineeIds.map(traineeId => ({
-      queryKey: ['/api/validations', { traineeId }],
+      queryKey: [`/api/validations?traineeId=${traineeId}`],
       enabled: selectedTraineeIds.length > 0,
     })),
   });
@@ -148,7 +148,7 @@ export default function TrainerSession() {
       return response.json();
     },
     onSuccess: (_validation, { traineeId }) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/validations', { traineeId }] });
+      queryClient.invalidateQueries({ queryKey: [`/api/validations?traineeId=${traineeId}`] });
       toast({
         title: "Element validé",
         description: `Validé par ${currentUser?.name}`,
@@ -180,7 +180,7 @@ export default function TrainerSession() {
         description: `La session "${sessionName}" a été sauvegardée`,
       });
       setSaveDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/training-sessions'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/training-sessions?trainerId=${currentUser?.id}`] });
     },
     onError: () => {
       toast({
@@ -348,18 +348,26 @@ export default function TrainerSession() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t.trainer.currentSession}
-          </h1>
-          <p className="text-muted-foreground">
-            Validez les éléments de formation pour les stagiaires sélectionnés
-          </p>
-        </div>
+    <div className="h-full flex flex-col">
+      <div className="bg-card border-b px-6 py-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold tracking-tight">
+                {t.trainer.currentSession}
+              </h1>
+              {selectedTraineeIds.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {selectedTraineeIds.length} stagiaire{selectedTraineeIds.length > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Validez les éléments de formation pour les stagiaires sélectionnés
+            </p>
+          </div>
 
-        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
           <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" data-testid="button-load-session">
@@ -441,8 +449,10 @@ export default function TrainerSession() {
           </Dialog>
         </div>
       </div>
+    </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="flex-1 overflow-auto p-6">
+        <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle className="text-lg">Configuration</CardTitle>
@@ -704,5 +714,6 @@ export default function TrainerSession() {
         </Card>
       </div>
     </div>
+  </div>
   );
 }
