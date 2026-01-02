@@ -23,10 +23,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
+  // Parse body if string
+  let body = req.body;
+  if (typeof body === 'string') {
+    try {
+      body = JSON.parse(body);
+    } catch (e) {
+      body = {};
+    }
+  }
+
   try {
+    // Debug endpoint - list all users
+    if (url.includes('/api/debug/users') && method === 'GET') {
+      const users = await db.select().from(schema.users);
+      return res.json({ count: users.length, users: users.map(u => ({ id: u.id, username: u.username, role: u.role })) });
+    }
+
     // Authentication
     if (url.includes('/api/auth/login') && method === 'POST') {
-      const { username, labCode } = req.body;
+      const { username, labCode } = body || {};
       if (!username) {
         return res.status(400).json({ error: 'Username is required' });
       }
@@ -132,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url.includes('/api/validations') && method === 'POST') {
-      const { traineeId, trainingElementId, trainerId, trainingLocation } = req.body;
+      const { traineeId, trainingElementId, trainerId, trainingLocation } = body || {};
       const [validation] = await db.insert(schema.validations).values({
         traineeId,
         trainingElementId,
@@ -161,7 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url.includes('/api/comfort-ratings') && method === 'POST') {
-      const { traineeId, trainingElementId, rating, isRevision } = req.body;
+      const { traineeId, trainingElementId, rating, isRevision } = body || {};
       
       const [existing] = await db.select().from(schema.comfortRatings).where(
         and(
@@ -274,7 +290,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url.includes('/api/training-sessions') && method === 'POST') {
-      const { trainerId, traineeIds, name, instrumentIds, location } = req.body;
+      const { trainerId, traineeIds, name, instrumentIds, location } = body || {};
       const [session] = await db.insert(schema.trainingSessions).values({
         trainerId,
         traineeIds: traineeIds || [],
