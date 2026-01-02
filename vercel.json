@@ -4,11 +4,6 @@
   "outputDirectory": "dist/public",
   "framework": null,
   "installCommand": "npm install",
-  "functions": {
-    "api/index.ts": {
-      "includeFiles": "shared/**"
-    }
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" },
     { "source": "/(.*)", "destination": "/index.html" }
