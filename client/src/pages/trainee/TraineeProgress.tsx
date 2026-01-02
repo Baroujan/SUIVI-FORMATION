@@ -1,263 +1,339 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InstrumentTabs } from "@/components/InstrumentTabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Loader2, ExternalLink, Star, Check, RefreshCw } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
-import type { InstrumentWithChapters } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Instrument, Chapter, SubChapter, TrainingElement, Validation, ComfortRating } from "@shared/schema";
+
+interface TraineeProgressData {
+  totalElements: number;
+  validatedElements: number;
+  ratedElements: number;
+  validations: Validation[];
+  comfortRatings: ComfortRating[];
+}
 
 export default function TraineeProgress() {
   const { t, currentUser } = useApp();
   const { toast } = useToast();
+  const [activeInstrumentTab, setActiveInstrumentTab] = useState<string>("");
 
-  const mockInstrumentsWithProgress: InstrumentWithChapters[] = [
-    {
-      id: "i1",
-      name: "FACS Canto II",
-      description: "Cytomètre analyseur 8 couleurs",
-      icon: null,
-      chapters: [
-        {
-          id: "ch1-i1",
-          instrumentId: "i1",
-          name: "Démarrage de l'instrument",
-          order: 1,
-          subChapters: [
-            {
-              id: "sub1-i1",
-              chapterId: "ch1-i1",
-              name: "Mise en route",
-              order: 1,
-              elements: [
-                {
-                  id: "el1-i1",
-                  subChapterId: "sub1-i1",
-                  name: "Allumage du cytomètre",
-                  description: "Procédure d'allumage",
-                  facsUniversityLink: "https://facsuniversity.com/allumage",
-                  order: 1,
-                  validation: {
-                    id: "v1",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el1-i1",
-                    trainerId: "trainer1",
-                    validatedAt: new Date("2026-01-15"),
-                    trainingLocation: "Rungis",
-                  },
-                  comfortRating: {
-                    id: "cr1",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el1-i1",
-                    rating: 4,
-                    ratedAt: new Date("2026-01-15"),
-                    isRevision: false,
-                  },
-                },
-                {
-                  id: "el2-i1",
-                  subChapterId: "sub1-i1",
-                  name: "Vérification des fluides",
-                  description: "Contrôle des niveaux",
-                  facsUniversityLink: "https://facsuniversity.com/fluides",
-                  order: 2,
-                  validation: {
-                    id: "v2",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el2-i1",
-                    trainerId: "trainer1",
-                    validatedAt: new Date("2026-01-15"),
-                    trainingLocation: "Rungis",
-                  },
-                  comfortRating: {
-                    id: "cr2",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el2-i1",
-                    rating: 5,
-                    ratedAt: new Date("2026-01-15"),
-                    isRevision: false,
-                  },
-                },
-                {
-                  id: "el3-i1",
-                  subChapterId: "sub1-i1",
-                  name: "Lancement du logiciel",
-                  description: "Démarrage de FACSDiva",
-                  facsUniversityLink: null,
-                  order: 3,
-                  validation: {
-                    id: "v3",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el3-i1",
-                    trainerId: "trainer1",
-                    validatedAt: new Date("2026-01-14"),
-                    trainingLocation: "Rungis",
-                  },
-                  comfortRating: {
-                    id: "cr3",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el3-i1",
-                    rating: 3,
-                    ratedAt: new Date("2026-01-14"),
-                    isRevision: false,
-                  },
-                },
-              ],
-            },
-            {
-              id: "sub2-i1",
-              chapterId: "ch1-i1",
-              name: "Contrôle qualité",
-              order: 2,
-              elements: [
-                {
-                  id: "el4-i1",
-                  subChapterId: "sub2-i1",
-                  name: "CST quotidien",
-                  description: "Cytometer Setup & Tracking",
-                  facsUniversityLink: "https://facsuniversity.com/cst",
-                  order: 1,
-                  validation: {
-                    id: "v4",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el4-i1",
-                    trainerId: "trainer1",
-                    validatedAt: new Date("2026-01-14"),
-                    trainingLocation: "Rungis",
-                  },
-                  comfortRating: {
-                    id: "cr4",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el4-i1",
-                    rating: 4,
-                    ratedAt: new Date("2026-01-14"),
-                    isRevision: false,
-                  },
-                },
-                {
-                  id: "el5-i1",
-                  subChapterId: "sub2-i1",
-                  name: "Validation des résultats CST",
-                  description: "Analyse des résultats",
-                  facsUniversityLink: null,
-                  order: 2,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          id: "ch2-i1",
-          instrumentId: "i1",
-          name: "Acquisition des données",
-          order: 2,
-          subChapters: [
-            {
-              id: "sub3-i1",
-              chapterId: "ch2-i1",
-              name: "Configuration du protocole",
-              order: 1,
-              elements: [
-                {
-                  id: "el6-i1",
-                  subChapterId: "sub3-i1",
-                  name: "Création d'expérience",
-                  description: "Nouveau projet dans FACSDiva",
-                  facsUniversityLink: "https://facsuniversity.com/experience",
-                  order: 1,
-                },
-                {
-                  id: "el7-i1",
-                  subChapterId: "sub3-i1",
-                  name: "Configuration des paramètres",
-                  description: "Voltages et compensations",
-                  facsUniversityLink: null,
-                  order: 2,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "i2",
-      name: "LSR Fortessa",
-      description: "Cytomètre analyseur 18 couleurs",
-      icon: null,
-      chapters: [
-        {
-          id: "ch1-i2",
-          instrumentId: "i2",
-          name: "Démarrage de l'instrument",
-          order: 1,
-          subChapters: [
-            {
-              id: "sub1-i2",
-              chapterId: "ch1-i2",
-              name: "Mise en route",
-              order: 1,
-              elements: [
-                {
-                  id: "el1-i2",
-                  subChapterId: "sub1-i2",
-                  name: "Allumage des lasers",
-                  description: "Procédure d'allumage des lasers",
-                  facsUniversityLink: "https://facsuniversity.com/lasers",
-                  order: 1,
-                  validation: {
-                    id: "v5",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el1-i2",
-                    trainerId: "trainer2",
-                    validatedAt: new Date("2026-01-10"),
-                    trainingLocation: "En ligne",
-                  },
-                  comfortRating: {
-                    id: "cr5",
-                    traineeId: currentUser?.id || "",
-                    trainingElementId: "el1-i2",
-                    rating: 3,
-                    ratedAt: new Date("2026-01-10"),
-                    isRevision: false,
-                  },
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ];
+  const { data: instruments = [], isLoading: loadingInstruments } = useQuery<Instrument[]>({
+    queryKey: ['/api/instruments'],
+  });
 
-  const handleRateElement = (elementId: string, rating: number) => {
-    toast({
-      title: "Évaluation enregistrée",
-      description: `Niveau d'aisance mis à jour: ${rating}/5`,
-    });
+  const { data: chapters = [] } = useQuery<Chapter[]>({
+    queryKey: ['/api/chapters'],
+  });
+
+  const { data: subChapters = [] } = useQuery<SubChapter[]>({
+    queryKey: ['/api/sub-chapters'],
+  });
+
+  const { data: trainingElements = [] } = useQuery<TrainingElement[]>({
+    queryKey: ['/api/training-elements'],
+  });
+
+  const { data: progressData, isLoading: loadingProgress } = useQuery<TraineeProgressData>({
+    queryKey: ['/api/trainee', currentUser?.id, 'progress'],
+    enabled: !!currentUser?.id,
+  });
+
+  const validationsMap = useMemo(() => {
+    const map = new Map<string, Validation>();
+    progressData?.validations?.forEach(v => map.set(v.trainingElementId, v));
+    return map;
+  }, [progressData?.validations]);
+
+  const ratingsMap = useMemo(() => {
+    const map = new Map<string, ComfortRating>();
+    progressData?.comfortRatings?.forEach(r => map.set(r.trainingElementId, r));
+    return map;
+  }, [progressData?.comfortRatings]);
+
+  const rateMutation = useMutation({
+    mutationFn: async ({ elementId, rating }: { elementId: string; rating: number }) => {
+      const response = await apiRequest('POST', '/api/comfort-ratings', {
+        traineeId: currentUser?.id,
+        trainingElementId: elementId,
+        rating,
+        isRevision: ratingsMap.has(elementId),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/trainee', currentUser?.id, 'progress'] });
+      toast({
+        title: "Note enregistrée",
+        description: "Votre niveau d'aisance a été sauvegardé",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer la note",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const instrumentsWithChapters = useMemo(() => {
+    return instruments.map(instrument => {
+      const instrumentChapters = chapters
+        .filter(c => c.instrumentId === instrument.id)
+        .sort((a, b) => a.order - b.order)
+        .map(chapter => ({
+          ...chapter,
+          subChapters: subChapters
+            .filter(sc => sc.chapterId === chapter.id)
+            .sort((a, b) => a.order - b.order)
+            .map(subChapter => ({
+              ...subChapter,
+              elements: trainingElements
+                .filter(te => te.subChapterId === subChapter.id)
+                .filter(te => validationsMap.has(te.id))
+                .sort((a, b) => a.order - b.order),
+            }))
+            .filter(sc => sc.elements.length > 0),
+        }))
+        .filter(ch => ch.subChapters.length > 0);
+
+      return {
+        ...instrument,
+        chapters: instrumentChapters,
+      };
+    }).filter(i => i.chapters.length > 0);
+  }, [instruments, chapters, subChapters, trainingElements, validationsMap]);
+
+  const totalValidated = progressData?.validatedElements || 0;
+  const totalRated = progressData?.ratedElements || 0;
+
+  const avgComfort = useMemo(() => {
+    if (!progressData?.comfortRatings?.length) return 0;
+    const sum = progressData.comfortRatings.reduce((acc, r) => acc + r.rating, 0);
+    return (sum / progressData.comfortRatings.length).toFixed(1);
+  }, [progressData?.comfortRatings]);
+
+  if (loadingInstruments || loadingProgress) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const renderStarRating = (elementId: string) => {
+    const currentRating = ratingsMap.get(elementId)?.rating || 0;
+    const isRevision = ratingsMap.has(elementId);
+
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map(star => (
+          <Button
+            key={star}
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => rateMutation.mutate({ elementId, rating: star })}
+            disabled={rateMutation.isPending}
+            data-testid={`button-rate-${elementId}-${star}`}
+          >
+            <Star
+              className={`h-4 w-4 ${
+                star <= currentRating
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "text-muted-foreground"
+              }`}
+            />
+          </Button>
+        ))}
+        {isRevision && (
+          <Badge variant="outline" className="ml-2 text-xs">
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Révisé
+          </Badge>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">
-          {t.navigation.progress}
+          {t.trainee.myProgress}
         </h1>
         <p className="text-muted-foreground">
-          Consultez et évaluez votre aisance sur chaque élément validé
+          Consultez vos éléments validés et notez votre niveau d'aisance
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Mes éléments de formation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InstrumentTabs
-            instruments={mockInstrumentsWithProgress}
-            mode="trainee"
-            onRateElement={handleRateElement}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Éléments validés
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-validated-count">
+              {totalValidated}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Éléments notés
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="text-rated-count">
+              {totalRated} / {totalValidated}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Moyenne d'aisance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold flex items-center gap-2" data-testid="text-avg-comfort">
+              {avgComfort}
+              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {instrumentsWithChapters.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            Aucun élément validé pour le moment. Les éléments apparaîtront ici lorsque votre formateur les validera.
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Mes éléments de formation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs
+              value={activeInstrumentTab || instrumentsWithChapters[0]?.id}
+              onValueChange={setActiveInstrumentTab}
+            >
+              <TabsList className="mb-4 flex-wrap">
+                {instrumentsWithChapters.map(instrument => (
+                  <TabsTrigger
+                    key={instrument.id}
+                    value={instrument.id}
+                    data-testid={`tab-instrument-${instrument.id}`}
+                  >
+                    {instrument.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {instrumentsWithChapters.map(instrument => (
+                <TabsContent key={instrument.id} value={instrument.id}>
+                  <ScrollArea className="h-[500px]">
+                    <Accordion type="multiple" className="w-full">
+                      {instrument.chapters.map(chapter => (
+                        <AccordionItem key={chapter.id} value={chapter.id}>
+                          <AccordionTrigger className="text-left">
+                            <span className="font-medium">{chapter.name}</span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="space-y-4 pl-4">
+                              {chapter.subChapters.map(subChapter => (
+                                <div key={subChapter.id} className="space-y-2">
+                                  <h4 className="text-sm font-medium text-muted-foreground">
+                                    {subChapter.name}
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {subChapter.elements.map(element => {
+                                      const validation = validationsMap.get(element.id);
+                                      return (
+                                        <div
+                                          key={element.id}
+                                          className="flex flex-col gap-2 p-3 rounded-md bg-muted/30 border"
+                                          data-testid={`element-card-${element.id}`}
+                                        >
+                                          <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                              <div className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-green-500 shrink-0" />
+                                                <span className="font-medium text-sm">
+                                                  {element.name}
+                                                </span>
+                                              </div>
+                                              {element.description && (
+                                                <p className="text-xs text-muted-foreground mt-1 ml-6">
+                                                  {element.description}
+                                                </p>
+                                              )}
+                                              {validation && (
+                                                <p className="text-xs text-muted-foreground mt-1 ml-6">
+                                                  Validé le {new Date(validation.validatedAt).toLocaleDateString('fr-FR')}
+                                                  {validation.trainingLocation && ` - ${validation.trainingLocation}`}
+                                                </p>
+                                              )}
+                                            </div>
+                                            {element.facsUniversityLink && (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                asChild
+                                              >
+                                                <a
+                                                  href={element.facsUniversityLink}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                >
+                                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                                  FACSUniversity
+                                                </a>
+                                              </Button>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center justify-between gap-4 ml-6">
+                                            <span className="text-xs text-muted-foreground">
+                                              Notez votre aisance :
+                                            </span>
+                                            {renderStarRating(element.id)}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </ScrollArea>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -1,0 +1,25 @@
+Voici l'objectif de base : "Objectif : disposer d’une ressource en ligne permettant aux formateurs (Rungis, sur site et en ligne) de valider les éléments vu en formation et pour le stagiaire de donner son niveau d’aisance sur ces éléments. Cet outil doit être modifiable pour tenir compte des nouvelles fonctions vues lors de support complémentaires ou le suivi des notions revues. Le système doit être tracé pour garder l’historique des modifications (visible par les formateurs et le stagiaire).
+ 
+Liste de fonctionnalités :
+ 
+Outil accessible en ligne (URL pouvant être rattaché à FACSUniversity)
+Si possible authentification automatique (j’en doute) lors du passage de FACSUniversity (loggué) via l’outil.   Ou sinon interface simple pour se logguer (sans info RGPD sensibles). ID Utilisateur & ID labo.
+Interface formateur
+Possibilité de sélectionner les ID des personnes actuellement en formation (système de QR code à scanner pour faciliter la saisie ?   Sans QR code pour les formations à distance).
+Possibilité de sauvegarder/charger la liste des ID (si formation sur plusieurs jours)
+Possibilité de sélectionner les instruments vus durant la formation
+Pour chaque instrument sélectionné un onglet séparé permettant de visualiser l’ensemble des éléments instrument/logiciel pouvant être apprises. Elements classés par chapitre / sous chapitre.
+Possibilité de sélectionner un chapitre ou sous chapitre ou sous élément et valider (formateur) le fait que l’élément a été vu (sauvegarde date, nom formateur).
+Lors de validation d’éléments/sous chapitre/chapitre, ces éléments apparaissent sur l’interface des utilisateurs assistant à la formation
+Si pour la personne formée, l’élément est nouveau : nouveau élément, nouvelle appréciation demandée.
+Si la personne formée a déjà vu la notion auparavant : l’élément est réactivité automatiquement (la date originelle de formation pour cet élément ou la nouvelle date sont toutes les deux conservées). Indiquer que la notion a été vu X fois.
+Interface stagiaire
+Les chapitres/sous chapitres/fonctions apparaissent au fur et à mesure de leurs formations en fonction de la validation des éléments par les formateurs.
+Possibilité de laisser une appréciation pour chaque élément (niveau d’aisance   1 à 5). Information gravée dans le marbre (avec date).
+Possibilité de relaisser une appréciation en tout temps en réactivant manuellement un élément (cas de l’utilisateur qui pratique en autonomie).
+Possibilité pour certains éléments d’accéder à des liens vers FACSUniversity afin de voir du contenu en ligne (eLearning/Tutoflow) et donc de renforcer une notion
+Partie admin :
+Possibilité de recevoir un mail automatique (BDB France Scientific Support) lorsqu’un client descend en dessous d’un seuil critique (moyenne d’aisance) afin de pro-activement proposer du renforcement.
+Possibilité de visualiser le score global d’un labo via la saisie de l’ID labo (compilation de l’ensemble des fonctions vues à partir de chaque ID utilisateur provenant de cet ID Labo).  Moyenne d’aisance calculée. Fréquence des visites (formation Rungis + support sur site) calculée.
+Possibilité de changer la langue de l’interface
+Possibilité d’envoyer un rapport Utilisateur ou un rapport Labo par email." Je veux que tu rendes ce site utilisable en production. Reprends bien le cahier des charges et inspires toi des données disponible sur le site https://www.bdbiosciences.com/en-fr pour les infos cytomètres. Il doit être fonctionnel et finis avec une documentation de comment fonctionne le site

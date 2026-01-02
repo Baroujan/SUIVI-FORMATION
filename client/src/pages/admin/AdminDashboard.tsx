@@ -1,11 +1,10 @@
-import { useState } from "react";
 import {
   Building2,
   Users,
   AlertTriangle,
   TrendingUp,
   Mail,
-  FileText,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,23 +22,38 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface AdminMetrics {
+  labCount: number;
+  traineeCount: number;
+  alertCount: number;
+  globalAvgComfort: number;
+  alertThreshold: number;
+  alertTrainees: Array<{
+    id: string;
+    name: string;
+    lab: string;
+    avgComfort: number;
+    lastTraining: string | null;
+  }>;
+  laboratories: Array<{
+    id: string;
+    code: string;
+    name: string;
+    userCount: number;
+    avgComfort: number;
+    trainingCount: number;
+  }>;
+}
 
 export default function AdminDashboard() {
   const { t } = useApp();
   const { toast } = useToast();
 
-  const alertThreshold = 2.5;
-
-  const alertTrainees = [
-    { id: "t1", name: "Pierre Bernard", lab: "LAB002", avgComfort: 2.1, lastTraining: "2025-12-20" },
-    { id: "t2", name: "Lucas Robert", lab: "LAB003", avgComfort: 1.8, lastTraining: "2025-12-15" },
-  ];
-
-  const laboratories = [
-    { id: "lab1", code: "LAB001", name: "CHU Lyon", userCount: 12, avgComfort: 4.1, trainingFreq: 2.5 },
-    { id: "lab2", code: "LAB002", name: "Institut Pasteur", userCount: 8, avgComfort: 3.2, trainingFreq: 1.8 },
-    { id: "lab3", code: "LAB003", name: "CNRS Marseille", userCount: 5, avgComfort: 2.8, trainingFreq: 1.2 },
-  ];
+  const { data: metrics, isLoading } = useQuery<AdminMetrics>({
+    queryKey: ['/api/admin/metrics'],
+  });
 
   const handleSendAlert = (traineeId: string, traineeName: string) => {
     toast({
@@ -47,6 +61,17 @@ export default function AdminDashboard() {
       description: `Email envoyé au support BDB France Scientific concernant ${traineeName}`,
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const alertTrainees = metrics?.alertTrainees || [];
+  const laboratories = metrics?.laboratories || [];
 
   return (
     <div className="p-6 space-y-6">
@@ -62,26 +87,25 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Laboratoires"
-          value="25"
+          value={metrics?.labCount?.toString() || "0"}
           subtitle="actifs"
           icon={Building2}
         />
         <MetricCard
           title="Stagiaires"
-          value="156"
-          subtitle="formés"
+          value={metrics?.traineeCount?.toString() || "0"}
+          subtitle="enregistrés"
           icon={Users}
-          trend={{ value: 8, isPositive: true }}
         />
         <MetricCard
           title="Alertes actives"
-          value={alertTrainees.length.toString()}
-          subtitle={`Seuil: ${alertThreshold}/5`}
+          value={metrics?.alertCount?.toString() || "0"}
+          subtitle={`Seuil: ${metrics?.alertThreshold || 2.5}/5`}
           icon={AlertTriangle}
         />
         <MetricCard
           title="Moyenne globale"
-          value="3.8"
+          value={metrics?.globalAvgComfort?.toString() || "0"}
           subtitle="d'aisance"
           icon={TrendingUp}
         />
@@ -101,7 +125,7 @@ export default function AdminDashboard() {
           <CardContent>
             {alertTrainees.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">
-                Aucune alerte active
+                Aucune alerte active - tous les stagiaires sont au-dessus du seuil
               </p>
             ) : (
               <div className="space-y-3">
@@ -117,7 +141,9 @@ export default function AdminDashboard() {
                         <span>
                           Moyenne: <strong className="text-destructive">{trainee.avgComfort}/5</strong>
                         </span>
-                        <span>Dernière formation: {trainee.lastTraining}</span>
+                        {trainee.lastTraining && (
+                          <span>Dernière formation: {trainee.lastTraining}</span>
+                        )}
                       </div>
                     </div>
                     <Button
@@ -144,112 +170,58 @@ export default function AdminDashboard() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Laboratoire</TableHead>
-                  <TableHead className="text-right">Utilisateurs</TableHead>
-                  <TableHead className="text-right">Moyenne</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {laboratories.map((lab) => (
-                  <TableRow key={lab.id}>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{lab.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {lab.code}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{lab.userCount}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <ProgressBar
-                          value={lab.avgComfort}
-                          max={5}
-                          className="w-16"
-                          variant={
-                            lab.avgComfort >= 4
-                              ? "success"
-                              : lab.avgComfort >= 3
-                              ? "default"
-                              : "danger"
-                          }
-                        />
-                        <span className="text-sm font-medium min-w-[2.5rem]">
-                          {lab.avgComfort.toFixed(1)}
-                        </span>
-                      </div>
-                    </TableCell>
+            {laboratories.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                Aucun laboratoire enregistré
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Laboratoire</TableHead>
+                    <TableHead className="text-right">Utilisateurs</TableHead>
+                    <TableHead className="text-right">Moyenne</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {laboratories.slice(0, 5).map((lab) => (
+                    <TableRow key={lab.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{lab.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {lab.code}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{lab.userCount}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <ProgressBar
+                            value={lab.avgComfort}
+                            max={5}
+                            className="w-16"
+                            variant={
+                              lab.avgComfort >= 4
+                                ? "success"
+                                : lab.avgComfort >= 2.5
+                                  ? "warning"
+                                  : "danger"
+                            }
+                          />
+                          <span className="text-sm font-medium w-8">
+                            {lab.avgComfort}
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Actions rapides</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Button variant="outline" className="h-auto p-4 justify-start" asChild>
-            <Link href="/admin/reports">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span className="font-medium">{t.admin.individualReport}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Générer un rapport par stagiaire
-                </span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-auto p-4 justify-start" asChild>
-            <Link href="/admin/reports">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  <span className="font-medium">{t.admin.labReport}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Générer un rapport par laboratoire
-                </span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-auto p-4 justify-start" asChild>
-            <Link href="/admin/users">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  <span className="font-medium">Gérer les utilisateurs</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Ajouter, modifier ou supprimer
-                </span>
-              </div>
-            </Link>
-          </Button>
-          <Button variant="outline" className="h-auto p-4 justify-start" asChild>
-            <Link href="/admin/instruments">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-medium">Gérer le contenu</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  Instruments, chapitres, éléments
-                </span>
-              </div>
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

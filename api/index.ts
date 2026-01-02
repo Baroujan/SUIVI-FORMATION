@@ -300,6 +300,129 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Admin metrics
+    if (url.includes('/api/admin/metrics') && method === 'GET') {
+      const labsResult = await db.query('SELECT * FROM laboratories');
+      const usersResult = await db.query('SELECT * FROM users');
+      const ratingsResult = await db.query('SELECT * FROM comfort_ratings');
+      const validationsResult = await db.query('SELECT * FROM validations');
+      
+      const trainees = usersResult.rows.filter(u => u.role === 'trainee');
+      const labs = labsResult.rows;
+      
+      const alertThreshold = 2.5;
+      const alertTrainees: any[] = [];
+      const labMetrics: any[] = [];
+      
+      for (const lab of labs) {
+        const labTrainees = trainees.filter(t => t.laboratory_id === lab.id);
+        const labUserIds = labTrainees.map(t => t.id);
+        const labRatings = ratingsResult.rows.filter(r => labUserIds.includes(r.trainee_id));
+        const labValidations = validationsResult.rows.filter(v => labUserIds.includes(v.trainee_id));
+        
+        const avgComfort = labRatings.length > 0
+          ? labRatings.reduce((sum, r) => sum + r.rating, 0) / labRatings.length
+          : 0;
+        
+        const uniqueDates = [...new Set(labValidations.map(v => 
+          new Date(v.validated_at).toISOString().split('T')[0]
+        ))];
+        
+        labMetrics.push({
+          id: lab.id,
+          code: lab.code,
+          name: lab.name,
+          userCount: labTrainees.length,
+          avgComfort: Math.round(avgComfort * 10) / 10,
+          trainingCount: uniqueDates.length,
+        });
+      }
+      
+      for (const trainee of trainees) {
+        const traineeRatings = ratingsResult.rows.filter(r => r.trainee_id === trainee.id);
+        if (traineeRatings.length > 0) {
+          const avgRating = traineeRatings.reduce((sum, r) => sum + r.rating, 0) / traineeRatings.length;
+          if (avgRating < alertThreshold) {
+            const traineeValidations = validationsResult.rows.filter(v => v.trainee_id === trainee.id);
+            const lastTraining = traineeValidations.length > 0
+              ? traineeValidations.sort((a, b) => new Date(b.validated_at).getTime() - new Date(a.validated_at).getTime())[0].validated_at
+              : null;
+            
+            const lab = labs.find(l => l.id === trainee.laboratory_id);
+            alertTrainees.push({
+              id: trainee.id,
+              name: trainee.name,
+              lab: lab?.code || 'N/A',
+              avgComfort: Math.round(avgRating * 10) / 10,
+              lastTraining: lastTraining ? new Date(lastTraining).toISOString().split('T')[0] : null,
+            });
+          }
+        }
+      }
+      
+      const allRatings = ratingsResult.rows;
+      const globalAvg = allRatings.length > 0
+        ? Math.round((allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length) * 10) / 10
+        : 0;
+      
+      return res.json({
+        labCount: labs.length,
+        traineeCount: trainees.length,
+        alertCount: alertTrainees.length,
+        globalAvgComfort: globalAvg,
+        alertTrainees,
+        laboratories: labMetrics,
+        alertThreshold,
+      });
+    }
+
+    // Lab details with users
+    const labDetailsMatch = url.match(/\/api\/admin\/laboratories\/([^/?]+)/);
+    if (labDetailsMatch && method === 'GET') {
+      const labId = labDetailsMatch[1];
+      const labResult = await db.query('SELECT * FROM laboratories WHERE id = $1 OR code = $1', [labId]);
+      if (labResult.rows.length === 0) return res.status(404).json({ error: 'Laboratory not found' });
+      
+      const lab = labResult.rows[0];
+      const usersResult = await db.query('SELECT * FROM users WHERE laboratory_id = $1', [lab.id]);
+      const traineeIds = usersResult.rows.map(u => u.id);
+      
+      const validationsResult = await db.query('SELECT * FROM validations WHERE trainee_id = ANY($1)', [traineeIds]);
+      const ratingsResult = await db.query('SELECT * FROM comfort_ratings WHERE trainee_id = ANY($1)', [traineeIds]);
+      
+      const userDetails = usersResult.rows.map(user => {
+        const userRatings = ratingsResult.rows.filter(r => r.trainee_id === user.id);
+        const userValidations = validationsResult.rows.filter(v => v.trainee_id === user.id);
+        const avgComfort = userRatings.length > 0
+          ? Math.round((userRatings.reduce((sum, r) => sum + r.rating, 0) / userRatings.length) * 10) / 10
+          : 0;
+        
+        return {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+          validatedCount: userValidations.length,
+          ratedCount: userRatings.length,
+          avgComfort,
+        };
+      });
+      
+      const allRatings = ratingsResult.rows;
+      const labAvg = allRatings.length > 0
+        ? Math.round((allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length) * 10) / 10
+        : 0;
+      
+      return res.json({
+        id: lab.id,
+        name: lab.name,
+        code: lab.code,
+        userCount: usersResult.rows.length,
+        avgComfort: labAvg,
+        validationCount: validationsResult.rows.length,
+        users: userDetails,
+      });
+    }
+
     return res.status(404).json({ error: 'Not found' });
   } catch (error: any) {
     console.error('API Error:', error);

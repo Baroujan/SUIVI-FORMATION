@@ -24,14 +24,14 @@ export function LanguageSelector() {
           className={language === "fr" ? "bg-accent" : ""}
           data-testid="menu-item-language-fr"
         >
-          <span className="mr-2">🇫🇷</span> Français
+          <span className="font-medium mr-2">FR</span> Français
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setLanguage("en")}
           className={language === "en" ? "bg-accent" : ""}
           data-testid="menu-item-language-en"
         >
-          <span className="mr-2">🇬🇧</span> English
+          <span className="font-medium mr-2">EN</span> English
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
