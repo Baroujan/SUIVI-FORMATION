@@ -85,24 +85,50 @@ shared/
 - `/api/auth/login` - Authentication with User ID + Lab Code
 - `/api/modification-history` - Audit trail for entity changes
 - `/api/modification-history/all` - All modification history
+- `/api/admin/metrics` - Admin dashboard metrics (lab counts, alerts, global averages)
+- `/api/admin/laboratories/:id` - Detailed lab info with user metrics
+
+## BD Biosciences Instruments
+The application includes comprehensive training modules for:
+- **BD FACSCanto II** - 3-laser, 8-color flow cytometer
+- **BD FACSLyric** - Clinical flow cytometer with integrated reagent management
+- **BD FACSCelesta** - Flexible multicolor analyzer (up to 14 colors)
+- **BD FACSymphony A5** - High-parameter spectral analyzer (up to 50 parameters)
+- **BD FACSAria III** - High-speed 4-way cell sorter
+- **BD FACSMelody** - Compact cell sorter for research labs
 
 ## Development
 - Run: `npm run dev`
 - Frontend: Port 5000
 - Backend: Express server with Vite middleware
 
+## Production Deployment
+- **Platform**: Vercel
+- **URL**: https://suivi-formation.vercel.app/
+- **Database**: Neon PostgreSQL (serverless)
+- **API**: Vercel Serverless Functions (api/index.ts)
+
 ## Recent Changes
+- 2026-01-02: Made site production-ready with comprehensive BD Biosciences cytometer data
+- 2026-01-02: Added admin metrics API and connected dashboard to real data
+- 2026-01-02: Connected trainee interface to real API data (validations, comfort ratings)
+- 2026-01-02: Created user documentation (DOCUMENTATION.md)
 - 2026-01-01: Added modification history tracking with audit logs visible to trainers and trainees
 - 2026-01-01: Updated login page with User ID + Lab Code authentication (GDPR compliant)
 - 2026-01-01: Migrated from in-memory storage to PostgreSQL database for permanent data persistence
 - 2026-01-01: Initial implementation with all three interfaces (trainer, trainee, admin)
-- Complete data models with Drizzle ORM and seed data
-- All API endpoints implemented with full traceability
-- Internationalization (FR/EN) support
 
 ## Test Users
 - **trainer** - Trainer role (Dr. Sophie Laurent)
+- **formateur2** - Trainer role (Marc Dubois)
 - **admin** - Administrator role
 - **jean.dupont** (LAB001) - Trainee at CHU Lyon
 - **marie.martin** (LAB001) - Trainee at CHU Lyon
 - **pierre.bernard** (LAB002) - Trainee at Institut Pasteur
+- **claire.petit** (LAB002) - Trainee at Institut Pasteur
+- **thomas.roux** (LAB003) - Trainee at CNRS Marseille
+
+## Laboratories
+- **LAB001** - CHU Lyon - Centre de Cytométrie
+- **LAB002** - Institut Pasteur - Plateforme Cytométrie
+- **LAB003** - CNRS Marseille - UMR 7280
