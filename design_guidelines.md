@@ -1,87 +1,98 @@
-# Design Guidelines: Training Tracking Platform
+# Design Guidelines: BD Biosciences Training Tracker
 
 ## Design Approach
-**System Selected:** Material Design 3 (enterprise productivity variant)
-**Rationale:** Information-dense application requiring clear data hierarchy, familiar patterns for form inputs, tabular data, and multi-role interfaces (trainer, trainee, admin).
+**System Selected:** BD FACSDuet / FACS Workflow Manager Clinical Style
+**Rationale:** Professional clinical laboratory software aesthetic matching BD Biosciences product line. Clean, data-focused interface with deep blues and teal accents.
 
 ## Core Design Elements
 
+### Color Palette (BD Biosciences Clinical)
+- **Primary Blue:** HSL(210, 75%, 35%) - Deep professional blue
+- **Accent Teal:** HSL(195, 85%, 45%) - BD signature teal for highlights
+- **Sidebar:** HSL(210, 35%, 18%) - Dark navy sidebar (BD style)
+- **Background:** HSL(210, 20%, 98%) - Subtle blue-tinted white
+- **Cards:** Pure white for maximum contrast and clarity
+
 ### Typography
 - **Primary Font:** Inter (Google Fonts)
-- **Headers:** 600 weight, sizes: H1(32px), H2(24px), H3(20px), H4(16px)
-- **Body:** 400 weight, 14px for data tables, 16px for forms and content
-- **Data/Metrics:** 500 weight for emphasis on scores and statistics
+- **Headers:** 600 weight, sizes: H1(28px), H2(22px), H3(18px), H4(15px)
+- **Body:** 400 weight, 14px for data tables, 15px for forms
+- **Data/Metrics:** 600 weight for emphasis on scores and statistics
+- **Clinical emphasis:** Clear, readable text with good spacing
 
 ### Layout System
-**Spacing:** Tailwind units of 2, 4, 6, and 8 (p-2, m-4, gap-6, py-8)
+**Spacing:** Tailwind units of 3, 4, 6, and 8
 - Form fields: gap-4 between inputs
-- Card padding: p-6
-- Section spacing: py-8 on containers
+- Card padding: p-5 or p-6
+- Section spacing: py-6 on containers
 - Dense data views: gap-2 for compact lists
 
 ### Component Library
 
-**Navigation:**
-- Top app bar with role indicator (Trainer/Trainee/Admin)
-- Language switcher in header (dropdown with flags)
-- Tab navigation for instruments (Material tabs with underline indicator)
+**Navigation (BD Style):**
+- Dark navy sidebar with teal accent highlights
+- Role indicator badge in sidebar header
+- Language switcher in main header
+- Instrument tabs with clean underline indicator
 
 **Data Display:**
-- **Chapter/Sub-chapter Lists:** Expandable accordion pattern with checkmarks for validated items
-- **Progress Indicators:** Linear progress bars showing completion percentages
-- **Score Display:** Large metric cards (grid-cols-1 md:grid-cols-3) showing: average comfort level, validation rate, training frequency
-- **Tables:** Striped rows for trainee lists, sortable columns, compact spacing
+- **Training Elements:** Card-based with clear validation status
+- **Progress Indicators:** Segmented progress bars with percentage
+- **Metrics Cards:** Large numbers with labels, grid layout
+- **Tables:** Clean borders, alternating subtle backgrounds
 
 **Forms:**
-- **Comfort Level Rating:** Star rating or segmented button group (1-5 scale), displays current date on interaction
-- **Trainee Selection:** Multi-select dropdown with search, QR scanner button alongside
-- **Validation Checkboxes:** Clear checkmarks with auto-timestamp display
-- **Session Management:** Save/Load buttons with session name input field
+- **Comfort Level Rating:** 5-star rating with teal color
+- **Trainee Selection:** Multi-select with search and QR scanner
+- **Validation Checkboxes:** Large touch-friendly checkboxes
+- **Session Management:** Prominent save/load buttons
 
 **Cards:**
-- Instrument cards with icon, name, and validation count badge
-- Training element cards showing: title, validation status, comfort rating, associated links
-
-**Modals/Overlays:**
-- QR code scanner modal (full-screen camera view)
-- Confirmation dialogs for critical actions
-- Alert notifications when trainee scores drop below threshold
+- White background on blue-tinted background for contrast
+- Subtle shadows on hover
+- Clear section headers
 
 **Interactive Elements:**
-- Floating Action Button (FAB) for quick "Add New Element" on admin view
-- Chip filters for instrument categories
-- Link buttons to FACSUniversity resources (external link icon)
+- Primary buttons: Deep blue with white text
+- Secondary buttons: Light gray with dark text
+- Accent buttons: Teal for key actions
+- Ghost buttons for less prominent actions
 
 ### Dashboard Layouts
 
 **Trainer Interface:**
-- Top: Trainee selection bar (saved sessions accessible)
-- Instrument tabs below header
-- Main area: Two-column layout (md:grid-cols-2) - left side shows chapter tree, right side shows validation form
-- Bottom: Session controls (Save, Load, Export)
+- Header: Session name, location selector, save/load controls
+- Left panel: Trainee and instrument selection (configuration)
+- Main area: Training elements with validation controls
+- Clear visual feedback on validated items
 
 **Trainee Interface:**
-- Hero section: Personal progress overview (comfort score, validated items count)
-- Three-column grid (lg:grid-cols-3) of instrument cards
-- Expanded view: Chapter tree with comfort level sliders for each validated element
-- Quick access sidebar: Recent updates, links to resources
+- Progress overview at top (metrics cards)
+- Instrument cards with progress indicators
+- Expandable chapters with comfort rating controls
 
 **Admin Interface:**
-- Dashboard grid (grid-cols-1 md:grid-cols-2 lg:grid-cols-4): Global metrics cards
-- Laboratory search/filter bar
-- Data table: Lab scores, alert status, report generation actions
-- Report builder: Form with date range, user/lab selection, export format
+- Dashboard metrics grid at top
+- Laboratory list with search/filter
+- Alert indicators for low comfort scores
+- Report generation controls
 
 ### Accessibility
 - ARIA labels on all interactive elements
-- Keyboard navigation for all forms and tables
-- High contrast ratios for text and data
-- Clear focus indicators on form inputs and buttons
+- Keyboard navigation for forms and tables
+- High contrast ratios (WCAG AA compliant)
+- Clear focus indicators
 
 ### Animations
-Minimal - use only for:
-- Tab transitions (fade)
-- Accordion expand/collapse
-- Loading states (subtle spinners)
+Minimal and professional:
+- Tab transitions (150ms fade)
+- Accordion expand/collapse (200ms)
+- Loading spinners (subtle, teal colored)
+- Button press feedback (subtle scale)
 
-**No Images Required** - This is a data-focused application where clarity and functionality take precedence over visual imagery.
+### BD Biosciences Brand Notes
+- Clean, clinical aesthetic
+- Professional appearance suitable for laboratory environments
+- Data-focused with clear hierarchy
+- Teal accent color for key interactive elements
+- Dark sidebar navigation (signature BD style)
